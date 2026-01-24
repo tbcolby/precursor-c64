@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Tyler Colby"]
 edition = "2021"
 description = "C64 emulator for Precursor — 6502 CPU, VIC-II, CIA keyboard"
+license = "Apache-2.0"
 
 [dependencies]
 xous = "0.9.69"
