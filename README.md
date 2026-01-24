@@ -1,6 +1,6 @@
-# Precursor C64 Emulator
+# C64
 
-A Commodore 64 emulator for the [Precursor](https://www.crowdsupply.com/sutajio-kosagi/precursor) hardware platform, running on the [Xous](https://github.com/betrusted-io/xous-core) microkernel OS.
+A Commodore 64 emulator for the [Precursor](https://www.crowdsupply.com/sutajio-kosagi/precursor) device — play monochrome-compatible C64 games on a 1-bit display.
 
 ## Features
 
@@ -12,19 +12,6 @@ A Commodore 64 emulator for the [Precursor](https://www.crowdsupply.com/sutajio-
 - **Game Storage** — .PRG files stored in encrypted PDDB
 - **TCP Import** — Load games via `cat game.prg | nc <precursor-ip> 6464`
 - **Minimal ROM** — Built-in character font and boot stub when no C64 ROMs available
-
-## Architecture
-
-```
-src/
-├── main.rs       # Xous app shell, GAM setup, emulation loop, rendering
-├── cpu.rs        # MOS 6502 CPU — all legal opcodes, addressing modes
-├── memory.rs     # 64KB RAM + ROM banking + I/O dispatch
-├── vic.rs        # VIC-II: text mode, bitmap mode, color RAM, framebuffer
-├── cia.rs        # CIA1 keyboard matrix + timers, CIA2 VIC bank select
-├── keyboard.rs   # Precursor rawkeys → C64 matrix position mapping
-└── loader.rs     # .PRG loading, PDDB storage, TCP import
-```
 
 ## Controls
 
@@ -68,20 +55,65 @@ For full C64 compatibility (BASIC interpreter, proper KERNAL), store ROM files i
 
 Without original ROMs, the emulator uses a built-in minimal font and boot stub.
 
-## Technical Details
+## Installation
 
-### Performance
+Clone into your [xous-core](https://github.com/betrusted-io/xous-core) apps directory:
 
-- **100 MHz RISC-V** emulating **1 MHz 6502** = ~100x clock headroom
-- After overhead: ~30x effective speed margin for turn-based games
-- ~50,000 CPU cycles executed per display frame (~20 fps)
+```bash
+cd xous-core/apps
+git clone https://github.com/tbcolby/precursor-c64.git c64
+```
 
-### Display Mapping
+Register the app in your workspace. Add to `xous-core/Cargo.toml` members:
 
-- C64 display: 320x200 pixels, 16 colors
-- Precursor display: 336x536 pixels, 1-bit (black/white)
-- C64 output centered on Precursor screen with border
-- Colors mapped to monochrome via luminance threshold
+```toml
+"apps/c64",
+```
+
+Register in `apps/manifest.json`:
+
+```json
+"c64": {
+    "context_name": "C64",
+    "menu_name": {
+        "appmenu.c64": {
+            "en": "C64 Emulator",
+            "en-tts": "C 64 Emulator"
+        }
+    }
+}
+```
+
+Build and run:
+
+```bash
+cargo xtask renode-image c64
+```
+
+## Architecture
+
+```
+src/
+├── main.rs       # Xous app shell, GAM setup, emulation loop, rendering
+├── cpu.rs        # MOS 6502 CPU — all legal opcodes, addressing modes
+├── memory.rs     # 64KB RAM + ROM banking + I/O dispatch
+├── vic.rs        # VIC-II: text mode, bitmap mode, color RAM, framebuffer
+├── cia.rs        # CIA1 keyboard matrix + timers, CIA2 VIC bank select
+├── keyboard.rs   # Precursor rawkeys → C64 matrix position mapping
+└── loader.rs     # .PRG loading, PDDB storage, TCP import
+```
+
+### Key Design Decisions
+
+1. **Luminance threshold** — C64's 16 colors mapped to black/white by brightness. Games designed around high-contrast visuals (board games, wireframe, text) render cleanly.
+
+2. **Minimal built-in ROM** — No dependency on copyrighted C64 ROMs. Boots with a generated character set and stub KERNAL. Original ROMs optional for full BASIC compatibility.
+
+3. **50K cycles per frame** — Balances emulation accuracy with Precursor's 100 MHz RISC-V. Sufficient for turn-based and puzzle games at ~20 fps.
+
+4. **PDDB storage** — Games stored encrypted alongside other Precursor data. TCP import avoids needing USB mass storage or SD card access.
+
+5. **No SID audio (v1)** — Precursor has a piezo speaker only. Focus on playable visuals first.
 
 ### Memory Map
 
@@ -110,21 +142,14 @@ Without original ROMs, the emulator uses a built-in minimal font and boot stub.
 - Multicolor bitmap mode
 - Disk drive emulation (.D64)
 
-## Building
+### PDDB Storage
 
-### For Renode (emulator testing)
-
-```bash
-cd xous-core
-cargo xtask renode-image c64
-```
-
-### For Hardware
-
-```bash
-cd xous-core
-cargo xtask app-image c64
-```
+| Dictionary | Key Pattern | Format |
+|-----------|-------------|--------|
+| c64.games | `{game_name}` | Raw .PRG binary (2-byte load addr + program) |
+| c64.roms | `basic` | 8KB BASIC ROM |
+| c64.roms | `kernal` | 8KB KERNAL ROM |
+| c64.roms | `chargen` | 4KB Character ROM |
 
 ## Target Games
 
@@ -139,12 +164,26 @@ The emulator is designed for monochrome-compatible C64 games:
 | Strategy | Ultima I-V, Pirates!, M.U.L.E. |
 | Wireframe | Elite, Mercenary, Star Wars |
 
-## Dependencies
+## Testing
 
-- `gam` — Graphics Abstraction Manager (display, keyboard)
-- `pddb` — Encrypted storage for game files and ROMs
-- No external crates beyond Xous core
+```bash
+# Build for Renode emulation
+cargo xtask renode-image c64
+
+# Build for Precursor hardware
+cargo xtask app-image c64
+```
+
+## Development
+
+This app was developed using the methodology described in [xous-dev-toolkit](https://github.com/tbcolby/xous-dev-toolkit) — an LLM-assisted approach to Precursor app development on macOS ARM64.
+
+## Author
+
+Made by Tyler Colby — [Colby's Data Movers, LLC](https://colbysdatamovers.com)
+
+Contact: [tyler@colbysdatamovers.com](mailto:tyler@colbysdatamovers.com) | [GitHub Issues](https://github.com/tbcolby/precursor-c64/issues)
 
 ## License
 
-MIT
+Licensed under the Apache License, Version 2.0.
