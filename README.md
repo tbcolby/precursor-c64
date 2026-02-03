@@ -21,6 +21,7 @@ A Commodore 64 emulator for the [Precursor](https://www.crowdsupply.com/sutajio-
 |-----|--------|
 | Up/Down | Navigate game list |
 | Enter | Select/launch |
+| F4 or q | Quit app |
 
 ### Emulator Mode
 
@@ -173,6 +174,17 @@ cargo xtask renode-image c64
 # Build for Precursor hardware
 cargo xtask app-image c64
 ```
+
+## Changelog
+
+### v0.2.0
+
+- **Fixed app registration** — Use correct APP_NAME for GAM registration (matches manifest context_name "C64")
+- **Added quit handling** — F4 or 'q' in menu mode now exits the app
+
+### v0.1.0
+
+- Initial release with 6502 CPU, VIC-II text/bitmap modes, CIA keyboard, TCP game import
 
 ## Development
 

@@ -14,6 +14,7 @@ use num_traits::*;
 use gam::menu::*;
 
 const SERVER_NAME: &str = "_C64 Emulator_";
+const APP_NAME: &str = "C64"; // Must match manifest context_name
 
 // C64 display dimensions
 const C64_WIDTH: usize = 320;
@@ -59,6 +60,8 @@ struct App {
     pending_key: Option<(u8, u8)>,     // (col, row) of last pressed key
     pending_shift: bool,                // Whether shift was pressed with key
     key_hold_frames: u8,                // Frames to hold key before release
+    // Quit request
+    should_quit: bool,
 }
 
 impl App {
@@ -85,6 +88,7 @@ impl App {
             pending_key: None,
             pending_shift: false,
             key_hold_frames: 0,
+            should_quit: false,
         }
     }
 
@@ -294,6 +298,9 @@ impl App {
     }
 
     fn handle_menu_key(&mut self, key: char) {
+        // F4 key (using Xous F-key codes)
+        const KEY_F4: char = '\u{0014}';
+
         match key {
             '\u{2191}' => { // Up
                 if self.menu_cursor > 0 {
@@ -308,6 +315,9 @@ impl App {
             }
             '\r' => { // Enter — select
                 self.menu_select();
+            }
+            'q' | 'Q' | KEY_F4 => { // Quit
+                self.should_quit = true;
             }
             _ => {}
         }
@@ -632,7 +642,7 @@ fn main() -> ! {
     let gam = gam::Gam::new(&xns).expect("can't connect to GAM");
 
     let token = gam.register_ux(gam::UxRegistration {
-        app_name: String::from(SERVER_NAME),
+        app_name: String::from(APP_NAME),
         ux_type: gam::UxType::Chat,
         predictor: None,
         listener: sid.to_array(),
@@ -673,6 +683,10 @@ fn main() -> ! {
                     if key != '\u{0000}' {
                         app.handle_key(key);
                     }
+                }
+                // Check if quit was requested
+                if app.should_quit {
+                    break;
                 }
                 if app.mode == AppMode::Running {
                     app.run_frame();
