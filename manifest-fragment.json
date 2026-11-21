@@ -1,0 +1,14 @@
+{
+    "c64": {
+        "context_name": "C64",
+        "menu_name": {
+            "appmenu.c64": {
+                "en": "C64",
+                "en-tts": "C64",
+                "fr": "C64",
+                "ja": "C64",
+                "zh": "C64"
+            }
+        }
+    }
+}
