@@ -1,0 +1,9 @@
+[package]
+name = "c64-core"
+version = "0.1.0"
+edition = "2021"
+description = "Pure C64 emulation logic: 6502, CIA, VIC-II, bus, PRG loading. No Xous dependencies, unit-tested on the host"
+license = "Apache-2.0"
+
+# Keep this crate free of xous/gam/pddb so `cargo test` runs on any machine.
+[dependencies]
